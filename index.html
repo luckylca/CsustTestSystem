@@ -349,6 +349,15 @@
             .app-bar {
                 padding: 0.8rem 1rem;
             }
+
+            #qContent {
+                font-size: 1.1rem;
+                /* Slightly smaller for mobile */
+            }
+
+            .option-content {
+                font-size: 0.95rem;
+            }
         }
 
         .card {
@@ -3091,6 +3100,10 @@
             },
 
             renderQuestion() {
+                if (this.autoTimer) {
+                    clearTimeout(this.autoTimer);
+                    this.autoTimer = null;
+                }
                 const q = this.questionsToAsk[this.currentIndex];
 
                 let tag = q.category || q._source || '综合';
@@ -3137,7 +3150,7 @@
                     const displayIdx = indices.indexOf(q._userAnswer);
                     const correctDisplayIdx = indices.indexOf(correctIdx);
 
-                    const opts = document.querySelectorAll('.option');
+                    const opts = list.querySelectorAll('.option');
                     opts.forEach(o => o.classList.add('processed'));
 
                     if (displayIdx !== -1 && opts[displayIdx]) {
@@ -3167,19 +3180,25 @@
                 if (el.classList.contains('processed')) return;
 
                 this.questionsToAsk[this.currentIndex]._userAnswer = originalIdx;
-                document.querySelectorAll('.option').forEach(o => o.classList.add('processed'));
+                const list = document.getElementById('optionsList');
+                list.querySelectorAll('.option').forEach(o => o.classList.add('processed'));
 
                 const correctIdx = (answerChar || 'A').charCodeAt(0) - 65;
 
                 if (originalIdx === correctIdx) {
                     el.classList.add('correct');
                     this.score++;
+                    // Auto-advance after 1 second if correct
+                    this.autoTimer = setTimeout(() => {
+                        this.nextQuestion();
+                    }, 1000);
                 } else {
                     el.classList.add('wrong');
                     const q = this.questionsToAsk[this.currentIndex];
                     const displayIdx = q._shuffledIndices.indexOf(correctIdx);
                     if (displayIdx !== -1) {
-                        document.querySelectorAll('.option')[displayIdx].classList.add('correct');
+                        const list = document.getElementById('optionsList');
+                        list.querySelectorAll('.option')[displayIdx].classList.add('correct');
                     }
                 }
 
@@ -3191,7 +3210,8 @@
             reveal(answerChar, indices) {
                 const correctIdx = (answerChar || 'A').charCodeAt(0) - 65;
                 const displayIdx = indices.indexOf(correctIdx);
-                const opts = document.querySelectorAll('.option');
+                const list = document.getElementById('optionsList');
+                const opts = list.querySelectorAll('.option');
                 opts.forEach(o => o.classList.add('processed'));
                 if (displayIdx !== -1 && opts[displayIdx]) opts[displayIdx].classList.add('correct');
                 this.saveProgress();
